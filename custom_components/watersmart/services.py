@@ -139,7 +139,7 @@ async def __get_hourly_history(
 
         records.append(record)
 
-    return {"history": _serialize_records(records)}
+    return {"history": _serialize_records(records, include_leak=True)}
 
 
 @callback
