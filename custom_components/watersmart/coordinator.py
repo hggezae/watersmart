@@ -15,6 +15,7 @@ from homeassistant.components.recorder.statistics import (
     get_last_statistics,
     statistics_during_period,
 )
+from homeassistant.config_entries import ConfigEntryAuthFailed
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -22,10 +23,15 @@ from homeassistant.util.dt import as_local, get_default_time_zone, start_of_loca
 
 from . import statistics as stats
 from .client import AuthenticationError, UsageRecord, WaterSmartClient
-from .const import DEFAULT_SCAN_INTERVAL, DOMAIN, MANUFACTURER, SensorKey
+from .const import (
+    CONTINUOUS_FLOW_HOURS,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+    LEAK_LOOKBACK,
+    MANUFACTURER,
+    SensorKey,
+)
 from .types import SensorData
-
-EXCEPTIONS = (AuthenticationError, ClientConnectorError)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,6 +45,7 @@ class CoordinatorData(TypedDict, total=False):
 
     gallons_for_most_recent_hour: SensorData
     gallons_for_most_recent_full_day: SensorData
+    leak_detected: SensorData
     hourly: list[UsageRecord]
 
 
@@ -80,6 +87,7 @@ class WaterSmartUpdateCoordinator(DataUpdateCoordinator[CoordinatorData]):
         self.data_converters = (
             _sensor_data_for_most_recent_hour,
             _sensor_data_for_most_recent_full_day,
+            _sensor_data_for_leak,
         )
 
     async def _async_update_data(self) -> CoordinatorData:
@@ -89,6 +97,7 @@ class WaterSmartUpdateCoordinator(DataUpdateCoordinator[CoordinatorData]):
             The updated data.
 
         Raises:
+            ConfigEntryAuthFailed: If the stored credentials are rejected.
             UpdateFailed: If there is an error that could typically occur.
         """
         try:
@@ -96,7 +105,9 @@ class WaterSmartUpdateCoordinator(DataUpdateCoordinator[CoordinatorData]):
                 result: CoordinatorData = {
                     "hourly": await self.watersmart.async_get_hourly_data(),
                 }
-        except EXCEPTIONS as error:
+        except AuthenticationError as error:
+            raise ConfigEntryAuthFailed(error) from error
+        except ClientConnectorError as error:
             raise UpdateFailed(error) from error
 
         for converter in self.data_converters:
@@ -308,6 +319,48 @@ def _sensor_data_for_most_recent_full_day(data: CoordinatorData) -> SensorData:
         "state": gallons,
         "attrs": {
             "related": _serialize_records(records),
+        },
+    }
+
+
+@_data_converter(SensorKey.LEAK_DETECTED)
+def _sensor_data_for_leak(data: CoordinatorData) -> SensorData:
+    """Extract leak detection state.
+
+    A leak is reported when the utility flagged hours with leak gallons in
+    the lookback window or usage ran continuously for the configured
+    threshold of hours.
+
+    Returns:
+        The leak state & supporting records.
+    """
+
+    hourly = data["hourly"]
+    newest_date = as_local(_from_timestamp(hourly[-1]["read_datetime"]))
+    window = [
+        record
+        for record in hourly
+        if newest_date - as_local(_from_timestamp(record["read_datetime"]))
+        < LEAK_LOOKBACK
+    ]
+
+    flagged = [record for record in window if (record["leak_gallons"] or 0) > 0]
+
+    continuous = 0
+    for record in reversed(window):
+        if _record_gallons(record) > 0:
+            continuous += 1
+        else:
+            break
+
+    return {
+        "state": bool(flagged or continuous >= CONTINUOUS_FLOW_HOURS),
+        "attrs": {
+            "lookback_hours": LEAK_LOOKBACK.days * 24,
+            "continuous_flow_threshold_hours": CONTINUOUS_FLOW_HOURS,
+            "continuous_flow_hours": continuous,
+            "leak_gallons": sum((record["leak_gallons"] or 0) for record in window),
+            "flagged": _serialize_records(flagged, include_leak=True),
         },
     }
 

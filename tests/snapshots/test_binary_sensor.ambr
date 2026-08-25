@@ -1,0 +1,69 @@
+# serializer version: 1
+# name: test_leak_sensor_continuous_flow
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'attribution': 'Data scraped from WaterSmart',
+      'continuous_flow_hours': 8,
+      'continuous_flow_threshold_hours': 6,
+      'device_class': 'moisture',
+      'flagged': list([
+      ]),
+      'friendly_name': 'WaterSmart (test) Leak detected',
+      'leak_gallons': 0,
+      'lookback_hours': 24,
+    }),
+    'context': <ANY>,
+    'entity_id': 'binary_sensor.watersmart_test_leak_detected',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'on',
+  })
+# ---
+# name: test_leak_sensor_off
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'attribution': 'Data scraped from WaterSmart',
+      'continuous_flow_hours': 0,
+      'continuous_flow_threshold_hours': 6,
+      'device_class': 'moisture',
+      'flagged': list([
+      ]),
+      'friendly_name': 'WaterSmart (test) Leak detected',
+      'leak_gallons': 0,
+      'lookback_hours': 24,
+    }),
+    'context': <ANY>,
+    'entity_id': 'binary_sensor.watersmart_test_leak_detected',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'off',
+  })
+# ---
+# name: test_leak_sensor_utility_flagged
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      'attribution': 'Data scraped from WaterSmart',
+      'continuous_flow_hours': 0,
+      'continuous_flow_threshold_hours': 6,
+      'device_class': 'moisture',
+      'flagged': list([
+        dict({
+          'gallons': 0,
+          'leak_gallons': 40,
+          'start': '2024-06-19T22:00:00-07:00',
+        }),
+      ]),
+      'friendly_name': 'WaterSmart (test) Leak detected',
+      'leak_gallons': 40,
+      'lookback_hours': 24,
+    }),
+    'context': <ANY>,
+    'entity_id': 'binary_sensor.watersmart_test_leak_detected',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'on',
+  })
+# ---

@@ -59,6 +59,17 @@
           'read_datetime': 1718834400,
         }),
       ]),
+      'leak_detected': dict({
+        'attrs': dict({
+          'continuous_flow_hours': 0,
+          'continuous_flow_threshold_hours': 6,
+          'flagged': list([
+          ]),
+          'leak_gallons': 0,
+          'lookback_hours': 24,
+        }),
+        'state': False,
+      }),
     }),
     'entry': dict({
       'data': dict({

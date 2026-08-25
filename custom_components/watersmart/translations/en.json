@@ -1,7 +1,9 @@
 {
     "config": {
         "abort": {
-            "already_configured": "Device is already configured"
+            "already_configured": "Device is already configured",
+            "reauth_successful": "Re-authentication was successful",
+            "reconfigure_successful": "Re-configuration was successful"
         },
         "error": {
             "cannot_connect": "Failed to connect",
@@ -17,10 +19,34 @@
                 },
                 "description": "Enter your host and credentials. The host is the subdomain for accessing Watersmart, i.e. `{example_host}` for {example_url}.",
                 "title": "Subdomain & Authentication"
+            },
+            "reauth_confirm": {
+                "title": "Re-authenticate WaterSmart",
+                "description": "The stored password for {name} is no longer working. Enter the current password.",
+                "data": {
+                    "password": "Password"
+                }
+            },
+            "reconfigure": {
+                "title": "Reconfigure WaterSmart",
+                "data": {
+                    "host": "Host",
+                    "password": "Password",
+                    "username": "Username"
+                },
+                "description": "Enter your host and credentials. The host is the subdomain for accessing Watersmart, i.e. `{example_host}` for {example_url}.",
+                "data_description": {
+                    "password": "The password used to log in to your water utility's WaterSmart portal."
+                }
             }
         }
     },
     "entity": {
+        "binary_sensor": {
+            "leak_detected": {
+                "name": "Leak detected"
+            }
+        },
         "sensor": {
             "gallons_for_most_recent_full_day": {
                 "name": "Most recent full day usage"

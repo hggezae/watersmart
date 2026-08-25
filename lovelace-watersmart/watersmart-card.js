@@ -426,4 +426,3 @@ customElements.define("watersmart-card-editor", WatersmartCardEditor);
 WatersmartCard.getConfigElement = function () {
   return document.createElement("watersmart-card-editor");
 };
-

@@ -77,6 +77,27 @@ Gallons of water used on the most recent hour of data available.
 * `related`: List of related objects with `start` and `gallons` starting from the most recent
   hour.
 
+### `binary_sensor.watersmart_<host>_leak_detected`
+
+Turns on when WaterSmart's leak data flags hours within the last day, or when
+usage runs continuously for at least 6 hours (a common sign of a running
+toilet or stuck valve).
+
+#### Attributes
+
+* `lookback_hours`: The window considered for utility-flagged leaks.
+* `continuous_flow_threshold_hours`: Hours of uninterrupted usage that trigger detection.
+* `continuous_flow_hours`: Longest recent run of uninterrupted usage.
+* `leak_gallons`: Utility-reported leak gallons within the lookback window.
+* `flagged`: List of flagged records with `start`, `gallons`, and `leak_gallons`.
+
+## Re-authenticating & reconfiguring
+
+If the stored password stops working (for example after rotating it on your
+utility's portal), Home Assistant prompts you to re-authenticate from the
+WaterSmart integration page. Use _Reconfigure_ to change the host or username
+without deleting and re-adding the entry.
+
 ## Energy dashboard
 
 The integration imports the hourly water-usage series into Home Assistant's

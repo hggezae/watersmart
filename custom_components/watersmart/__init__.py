@@ -13,7 +13,7 @@ from .services import async_setup_services
 from .statistics import clear as clear_statistics
 from .types import WaterSmartConfigEntry, WaterSmartData
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR]
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
