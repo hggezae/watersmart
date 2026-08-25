@@ -354,8 +354,16 @@ def _record_gallons(record: UsageRecord) -> float | int:
     return result
 
 
-def _serialize_records(records: list[UsageRecord]) -> list[dict[str, Any]]:
+def _serialize_records(
+    records: list[UsageRecord], *, include_leak: bool = False
+) -> list[dict[str, Any]]:
     """Convert records for returning in attributes & service calls.
+
+    Args:
+        records: The usage records to serialize.
+        include_leak: Include the utility-reported leak gallons per record.
+            Service responses set this; entity attributes omit the key to
+            stay stable across releases.
 
     Returns:
         The serialized records.
@@ -365,6 +373,7 @@ def _serialize_records(records: list[UsageRecord]) -> list[dict[str, Any]]:
         {
             "start": as_local(_from_timestamp(record["read_datetime"])).isoformat(),
             "gallons": _record_gallons(record),
+            **({"leak_gallons": record["leak_gallons"] or 0} if include_leak else {}),
         }
         for record in records
     ]

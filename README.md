@@ -109,6 +109,75 @@ series instead of stranding it and starting a new one.
   account, removing and re-adding the config entry triggers a fresh full
   backfill.
 
+## Dashboards & visualization
+
+### Finding your statistic id
+
+The hourly series this integration imports is registered under the statistic
+id `watersmart:<config_entry_id>`. Find yours under _Developer Tools_ →
+_Statistics_ (search for "watersmart"), or from the config entry's URL in
+_Settings_ → _Devices & Services_ → _WaterSmart_.
+
+### Hourly & daily graphs with the built-in statistics card
+
+The series is stored as a running total, so chart `change` to see consumption
+per period instead of a growing staircase:
+
+```yaml
+type: statistics
+title: Water usage (hourly)
+chart_type: bar
+stat_types:
+  - change
+period: hour
+days_to_show: 7
+entities:
+  - watersmart:YOUR_ENTRY_ID
+```
+
+```yaml
+type: statistics
+title: Water usage (daily)
+chart_type: bar
+stat_types:
+  - change
+period: day
+days_to_show: 90
+entities:
+  - watersmart:YOUR_ENTRY_ID
+```
+
+The same series powers the Energy dashboard's water section — see
+[Energy dashboard](#energy-dashboard).
+
+### WaterSmart Card
+
+The [`lovelace-watersmart/`](lovelace-watersmart/) folder ships a companion
+Lovelace card: hourly bars with utility-reported **leak hours highlighted in
+red** and a GitHub-contribution-style daily heatmap. See its
+[README](lovelace-watersmart/README.md) for installation.
+
+```yaml
+type: custom:watersmart-card
+title: Water usage
+hours: 48
+weeks: 12
+```
+
+### mini-graph-card on the sensors
+
+For a quick state-based graph of the integration's sensors (no statistics
+involved, so history is limited by your recorder's purge settings):
+
+```yaml
+type: custom:mini-graph-card
+name: Recent hourly usage
+entities:
+  - sensor.watersmart_yourhost_most_recent_hour_usage
+hours_to_show: 48
+points_per_hour: 1
+```
+
 ## Services
 
 ### `watersmart.get_hourly_history`

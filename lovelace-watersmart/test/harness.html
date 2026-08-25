@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>watersmart-card harness</title>
+    <script>
+      // Minimal stand-ins for Home Assistant frontend prerequisites.
+      class HaCard extends HTMLElement {}
+      customElements.define("ha-card", HaCard);
+    </script>
+    <script src="../watersmart-card.js"></script>
+  </head>
+  <body style="background: #111; padding: 20px; width: 480px">
+    <watersmart-card id="card"></watersmart-card>
+
+    <script>
+      const DAY_MS = 3600 * 1000;
+      const now = new Date();
+      now.setMinutes(0, 0, 0);
+
+      // 30 days of hourly records; one utility-reported leak hour yesterday.
+      const history = [];
+      for (let i = 30 * 24 - 1; i >= 0; i--) {
+        const date = new Date(now.getTime() - i * DAY_MS);
+        const hour = date.getHours();
+        const gallons =
+          hour >= 6 && hour <= 8 ? 12.4 : hour === 19 ? 21.7 : hour % 3 === 0 ? 3.1 : 0;
+        history.push({
+          start: date.toISOString(),
+          gallons,
+          leak_gallons: i === 24 ? 40 : 0,
+        });
+      }
+
+      window.__hassMock = {
+        config: { unit_system: { volume_unit: "gal" } },
+        connection: {
+          async sendMessagePromise(msg) {
+            if (msg.type === "config_entries/get") {
+              return [
+                {
+                  entry_id: "testentry123",
+                  domain: "watersmart",
+                  title: "bendoregon (me@example.com)",
+                  disabled_by: null,
+                },
+              ];
+            }
+            if (
+              msg.type === "call_service" &&
+              msg.domain === "watersmart" &&
+              msg.service === "get_hourly_history"
+            ) {
+              window.__lastServiceCall = msg;
+              return { response: { history } };
+            }
+            throw new Error("unexpected ws message: " + msg.type);
+          },
+        },
+        callService() {},
+      };
+
+      const card = document.getElementById("card");
+      card.setConfig({ type: "custom:watersmart-card", title: "Water usage" });
+      card.hass = window.__hassMock;
+      window.__ready = true;
+    </script>
+  </body>
+</html>

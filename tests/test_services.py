@@ -78,6 +78,59 @@ async def test_service(
     assert mock_watersmart_client.async_get_hourly_data.call_count == update_call_count
 
 
+@pytest.mark.usefixtures("init_integration")
+async def test_service_includes_leak_gallons(
+    hass: HomeAssistant,
+    mock_config_entry: MockConfigEntry,
+    mock_watersmart_client,
+) -> None:
+    """Service responses include utility leak data; entity attributes do not."""
+    mock_watersmart_client.async_get_hourly_data.return_value = [
+        {
+            "read_datetime": 1718823600,
+            "gallons": 7.48,
+            "leak_gallons": 0,
+            "flags": None,
+        },
+        {
+            "read_datetime": 1718827200,
+            "gallons": 3.0,
+            "leak_gallons": 40,
+            "flags": None,
+        },
+        {
+            "read_datetime": 1718830800,
+            "gallons": None,
+            "leak_gallons": None,
+            "flags": None,
+        },
+    ]
+
+    response = await hass.services.async_call(
+        DOMAIN,
+        HOURLY_HISTORY_SERVICE_NAME,
+        {ATTR_CONFIG_ENTRY: mock_config_entry.entry_id, "cached": False},
+        blocking=True,
+        return_response=True,
+    )
+
+    assert response == {
+        "history": [
+            {"start": "2024-06-19T19:00:00-07:00", "gallons": 7.48, "leak_gallons": 0},
+            {"start": "2024-06-19T20:00:00-07:00", "gallons": 3.0, "leak_gallons": 40},
+            {"start": "2024-06-19T21:00:00-07:00", "gallons": 0, "leak_gallons": 0},
+        ]
+    }
+
+    states_with_related = [
+        state
+        for state in hass.states.async_all("sensor")
+        if "related" in state.attributes
+    ]
+    assert states_with_related, "expected a sensor exposing related records"
+    assert "leak_gallons" not in states_with_related[0].attributes["related"][0]
+
+
 @pytest.fixture
 def config_entry_data(
     mock_config_entry: MockConfigEntry, request: pytest.FixtureRequest
